@@ -2,7 +2,7 @@ const pool = require('../lib/utils/pool');
 const setup = require('../data/setup');
 const request = require('supertest');
 const app = require('../lib/app');
-
+jest.mock('../lib/utils/github.js');
 describe('gitty routes', () => {
   beforeEach(() => {
     return setup(pool);
@@ -20,10 +20,19 @@ describe('gitty routes', () => {
   });
 
   it.only('should login and redirect users to api/v1/posts', async () => {
-    const res = await (
-      await request(app).get('/api/v1/github/login/callback')
-    ).redirects(1);
+    const res = await await request(app)
+      .get('/api/v1/github/login/callback')
+      .redirects(1);
 
-    expect(res.redirects).toEqual(expect.stringContaining('/api/v1/posts'));
+    expect(res.redirects[0]).toEqual(expect.stringContaining('/api/v1/posts'));
+
+    expect(res.body).toEqual({
+      id: expect.any(String),
+      username: 'fake_github_user',
+      email: 'not-real@example.com',
+      avatar: expect.any(String),
+      iat: expect.any(Number),
+      exp: expect.any(Number),
+    });
   });
 });
